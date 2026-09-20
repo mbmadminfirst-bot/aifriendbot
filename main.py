@@ -35,6 +35,7 @@ LANG = {
         "pos_traits": "Question 6: Personality\n\nSelect a positive trait:",
         "neg_traits": "Now select a negative trait:",
         "hobby": "Question 7: Interests & Hobbies\n\nSelect one of the 5 hobbies you like to do together:",
+        "custom_prompt": "Question 8: Additional Details 📝\n\nBriefly describe any extra details about your friend's facial expression, style, or features (e.g., 'wearing glasses, smiling, dressed in a black hoodie'):",
         "generating": "🎨 Generating your friend's cinematic portrait... Please wait a moment.",
         "result": "🎉 Your ideal friend's profile is ready!",
         "error": "❌ Sorry, an error occurred while generating the image. Please try again later.",
@@ -51,6 +52,7 @@ LANG = {
         "pos_traits": "6-savol: Do'stning xarakteri\n\nIjobiy sifatni tanlang:",
         "neg_traits": "Endi salbiy sifatni tanlang:",
         "hobby": "7-savol: Qiziqishlar va xobbilar\n\nDo'stingiz bilan birga qilishni yoqtiradigan 5 ta qiziqishdan birini tanlang:",
+        "custom_prompt": "8-savol: Qo'shimcha tavsif 📝\n\nDo'stingizning yuz ko'rinishi, kiyinishi va boshqa o'ziga xosliklari haqida qisqacha yozib yuboring (Masalan: 'ko'zoynak taqqan, kulib turibdi, qora xudi kiygan'):",
         "generating": "🎨 Do'stingizning kinematografik portreti yaratilmoqda... Iltimos, biroz kuting.",
         "result": "🎉 Sizning ideal do'stingiz profili tayyor!",
         "error": "❌ Kechirasiz, rasm yaratishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.",
@@ -67,6 +69,7 @@ LANG = {
         "pos_traits": "Soru 6: Kişilik\n\nOlumlu bir özellik seçin:",
         "neg_traits": "Şimdi olumsuz bir özellik seçin:",
         "hobby": "Soru 7: İlgi Alanları ve Hobiler\n\nBirlikte yapmayı sevdiğiniz 5 hobiden birini seçin:",
+        "custom_prompt": "Soru 8: Ek Detaylar 📝\n\nArkadaşınızın yüz ifadesi, stili veya ek özellikleri hakkında kısa bir açıklama yazın (Örn: 'gözlük takıyor, gülümsüyor, siyah kapüşonlu giymiş'):",
         "generating": "🎨 Arkadaşınızın sinematik portresi oluşturuluyor... Lütfen bekleyin.",
         "result": "🎉 İdeal arkadaşınızın profili hazır!",
         "error": "❌ Üzgünüm, görsel oluşturulurken bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
@@ -83,6 +86,7 @@ LANG = {
         "pos_traits": "질문 6: 성격\n\n긍정적인 특성을 선택하세요:",
         "neg_traits": "이제 부정적인 특성을 선택하세요:",
         "hobby": "질문 7: 관심사 및 취미\n\n함께 하고 싶은 5가지 취미 중 하나를 선택하세요:",
+        "custom_prompt": "질문 8: 추가 세부 정보 📝\n\n친구의 표정, 스타일 또는 기타 특성에 대해 간단히 설명해 주세요 (예: '안경을 쓰고 웃고 있음, 검은색 후드티를 입음'):",
         "generating": "🎨 친구의 시네마틱 초상화를 생성 중입니다... 잠시만 기다려 주세요.",
         "result": "🎉 이상적인 친구 프로필이 준비되었습니다!",
         "error": "❌ 죄송합니다. 이미지 생성 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
@@ -99,6 +103,7 @@ LANG = {
         "pos_traits": "質問6：性格\n\nポジティブな特徴を選択してください：",
         "neg_traits": "次にネガティブな特徴を選択してください：",
         "hobby": "質問7：興味と趣味\n\n一緒にしたい5つの趣味から1つ選択してください：",
+        "custom_prompt": "質問8：追加の詳細 📝\n\n友達の表情、スタイル、その他の特徴について me 簡単に説明してください（例：『メガネをかけて笑顔、黒いパーカーを着ている』）：",
         "generating": "🎨 友達のシネマティックな肖像を生成しています... 少々お待ちください。",
         "result": "🎉 理想の友達のプロフィールが完成しました！",
         "error": "❌ 申し訳ありません。画像の生成中にエラーが発生しました。後でもう一度お試しください。",
@@ -136,6 +141,7 @@ class FriendForm(StatesGroup):
     positive_traits = State()
     negative_traits = State()
     hobby = State()
+    custom_prompt = State()  # Qo'shimcha erkin prompt holati
 
 # ==================== KLAVIATURALAR ====================
 def get_country_kb():
@@ -389,11 +395,14 @@ def create_cinematic_prompt(data: dict) -> str:
     pos_en = ", ".join(translate_trait_to_en(t) for t in data.get("pos_traits", []))
     neg_en = ", ".join(translate_trait_to_en(t) for t in data.get("neg_traits", []))
     hobby_en = translate_hobby_to_en(data.get("hobby", ""))
+    user_custom_prompt = data.get("custom_prompt", "")
 
+    # Foydalanuvchining o'z promptini umumiy promptga qo'shamiz
     prompt = (
         f"Ultra-realistic cinematic portrait of a {age_num}-year-old {gender_en} from {country_en}. "
         f"Physical appearance: {hair_en} hair, {eye_en} eyes, {face_en} face shape, "
-        f"natural skin texture with realistic details, expressive and friendly eyes. "
+        f"natural skin texture with realistic details, expressive eyes. "
+        f"Additional user specifics: {user_custom_prompt}. "
         f"Personality visible in the expression: {pos_en}, but sometimes {neg_en}. "
         f"The person loves {hobby_en}. "
         f"Shot on 85mm lens, f/1.8 aperture, golden hour lighting, soft rim light, "
@@ -494,11 +503,7 @@ async def process_face(message: types.Message, state: FSMContext):
 async def process_pos_traits(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("lang", "en")
-    
-    # 1 ta ijobiy sifat saqlanadi
     await state.update_data(pos_traits=[message.text])
-
-    # Birdan salbiy sifatni so'rashga o'tiladi
     await message.answer(LANG[lang]["neg_traits"], reply_markup=get_negative_kb(lang))
     await state.set_state(FriendForm.negative_traits)
 
@@ -506,11 +511,7 @@ async def process_pos_traits(message: types.Message, state: FSMContext):
 async def process_neg_traits(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("lang", "en")
-    
-    # 1 ta salbiy sifat saqlanadi
     await state.update_data(neg_traits=[message.text])
-
-    # Birdan hobby bo'limiga o'tiladi
     await message.answer(LANG[lang]["hobby"], reply_markup=get_hobby_kb(lang))
     await state.set_state(FriendForm.hobby)
 
@@ -519,7 +520,18 @@ async def process_hobby(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("lang", "en")
     await state.update_data(hobby=message.text)
+    
+    # Endi erkin qo'shimcha prompt yozish so'raladi
+    await message.answer(LANG[lang]["custom_prompt"], reply_markup=ReplyKeyboardRemove())
+    await state.set_state(FriendForm.custom_prompt)
 
+@dp.message(FriendForm.custom_prompt)
+async def process_custom_prompt(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    lang = data.get("lang", "en")
+    await state.update_data(custom_prompt=message.text)
+
+    # Barcha ma'lumotlar to'plangandan so'ng natijani tayyorlash
     data = await state.get_data()
 
     result_text = (
@@ -533,9 +545,10 @@ async def process_hobby(message: types.Message, state: FSMContext):
         f"😐 Face: {data.get('face')}\n"
         f"✅ Positive: {', '.join(data.get('pos_traits', []))}\n"
         f"❌ Negative: {', '.join(data.get('neg_traits', []))}\n"
-        f"🎯 Hobby: {data.get('hobby')}"
+        f"🎯 Hobby: {data.get('hobby')}\n"
+        f"📝 Custom details: {data.get('custom_prompt')}"
     )
-    await message.answer(result_text, reply_markup=ReplyKeyboardRemove())
+    await message.answer(result_text)
     await message.answer(LANG[lang]["generating"])
 
     prompt = create_cinematic_prompt(data)
