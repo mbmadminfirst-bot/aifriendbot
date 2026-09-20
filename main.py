@@ -11,7 +11,6 @@ from aiogram.types import ReplyKeyboardRemove, BufferedInputFile
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 # ==================== SOZLAMALAR ====================
-# Token Render-dagi Environment Variables-dan xavfsiz o'qiladi
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 
 logging.basicConfig(
@@ -33,8 +32,8 @@ LANG = {
         "appearance": "Question 5 (Select Appearance):\n\nHair color:",
         "eye_color": "Eye color:",
         "face_shape": "Face shape:",
-        "pos_traits": "Question 6: Personality\n\nSelect 3 positive traits. (Select 1st now):",
-        "neg_traits": "Now select 3 negative traits. (Select 1st now):",
+        "pos_traits": "Question 6: Personality\n\nSelect a positive trait:",
+        "neg_traits": "Now select a negative trait:",
         "hobby": "Question 7: Interests & Hobbies\n\nSelect one of the 5 hobbies you like to do together:",
         "generating": "🎨 Generating your friend's cinematic portrait... Please wait a moment.",
         "result": "🎉 Your ideal friend's profile is ready!",
@@ -49,8 +48,8 @@ LANG = {
         "appearance": "5-savol (Tashqi ko'rinishini tanlang):\n\nSoch rangi:",
         "eye_color": "Ko'z rangi:",
         "face_shape": "Yuz shakli:",
-        "pos_traits": "6-savol: Do'stning xarakteri\n\n3 ta ijobiy sifatni tanlang. (Hozircha 1-sini tanlang):",
-        "neg_traits": "Endi 3 ta salbiy sifatni tanlang. (1-sini tanlang):",
+        "pos_traits": "6-savol: Do'stning xarakteri\n\nIjobiy sifatni tanlang:",
+        "neg_traits": "Endi salbiy sifatni tanlang:",
         "hobby": "7-savol: Qiziqishlar va xobbilar\n\nDo'stingiz bilan birga qilishni yoqtiradigan 5 ta qiziqishdan birini tanlang:",
         "generating": "🎨 Do'stingizning kinematografik portreti yaratilmoqda... Iltimos, biroz kuting.",
         "result": "🎉 Sizning ideal do'stingiz profili tayyor!",
@@ -65,8 +64,8 @@ LANG = {
         "appearance": "Soru 5 (Dış Görünüm Seçin):\n\nSaç rengi:",
         "eye_color": "Göz rengi:",
         "face_shape": "Yüz şekli:",
-        "pos_traits": "Soru 6: Kişilik\n\n3 olumlu özellik seçin. (Şimdi 1.'yi seçin):",
-        "neg_traits": "Şimdi 3 olumsuz özellik seçin. (1.'yi seçin):",
+        "pos_traits": "Soru 6: Kişilik\n\nOlumlu bir özellik seçin:",
+        "neg_traits": "Şimdi olumsuz bir özellik seçin:",
         "hobby": "Soru 7: İlgi Alanları ve Hobiler\n\nBirlikte yapmayı sevdiğiniz 5 hobiden birini seçin:",
         "generating": "🎨 Arkadaşınızın sinematik portresi oluşturuluyor... Lütfen bekleyin.",
         "result": "🎉 İdeal arkadaşınızın profili hazır!",
@@ -81,8 +80,8 @@ LANG = {
         "appearance": "질문 5 (외모 선택):\n\n머리색:",
         "eye_color": "눈색:",
         "face_shape": "얼굴형:",
-        "pos_traits": "질문 6: 성격\n\n3가지 긍정적인 특성을 선택하세요. (지금 1번째 선택):",
-        "neg_traits": "이제 3가지 부정적인 특성을 선택하세요. (1번째 선택):",
+        "pos_traits": "질문 6: 성격\n\n긍정적인 특성을 선택하세요:",
+        "neg_traits": "이제 부정적인 특성을 선택하세요:",
         "hobby": "질문 7: 관심사 및 취미\n\n함께 하고 싶은 5가지 취미 중 하나를 선택하세요:",
         "generating": "🎨 친구의 시네마틱 초상화를 생성 중입니다... 잠시만 기다려 주세요.",
         "result": "🎉 이상적인 친구 프로필이 준비되었습니다!",
@@ -97,8 +96,8 @@ LANG = {
         "appearance": "質問5（外見を選択）：\n\n髪の色：",
         "eye_color": "目の色：",
         "face_shape": "顔の形：",
-        "pos_traits": "質問6：性格\n\nポジティブな特徴を3つ選択してください。（今1つ目を選択）：",
-        "neg_traits": "次にネガティブな特徴を3つ選択してください。（1つ目を選択）：",
+        "pos_traits": "質問6：性格\n\nポジティブな特徴を選択してください：",
+        "neg_traits": "次にネガティブな特徴を選択してください：",
         "hobby": "質問7：興味と趣味\n\n一緒にしたい5つの趣味から1つ選択してください：",
         "generating": "🎨 友達のシネマティックな肖像を生成しています... 少々お待ちください。",
         "result": "🎉 理想の友達のプロフィールが完成しました！",
@@ -495,33 +494,25 @@ async def process_face(message: types.Message, state: FSMContext):
 async def process_pos_traits(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("lang", "en")
-    pos_traits = data.get("pos_traits", [])
+    
+    # 1 ta ijobiy sifat saqlanadi
+    await state.update_data(pos_traits=[message.text])
 
-    if message.text not in pos_traits:
-        pos_traits.append(message.text)
-        await state.update_data(pos_traits=pos_traits)
-
-    if len(pos_traits) < 3:
-        await message.answer(f"({len(pos_traits)}/3)", reply_markup=get_positive_kb(lang))
-    else:
-        await message.answer(LANG[lang]["neg_traits"], reply_markup=get_negative_kb(lang))
-        await state.set_state(FriendForm.negative_traits)
+    # Birdan salbiy sifatni so'rashga o'tiladi
+    await message.answer(LANG[lang]["neg_traits"], reply_markup=get_negative_kb(lang))
+    await state.set_state(FriendForm.negative_traits)
 
 @dp.message(FriendForm.negative_traits)
 async def process_neg_traits(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("lang", "en")
-    neg_traits = data.get("neg_traits", [])
+    
+    # 1 ta salbiy sifat saqlanadi
+    await state.update_data(neg_traits=[message.text])
 
-    if message.text not in neg_traits:
-        neg_traits.append(message.text)
-        await state.update_data(neg_traits=neg_traits)
-
-    if len(neg_traits) < 3:
-        await message.answer(f"({len(neg_traits)}/3)", reply_markup=get_negative_kb(lang))
-    else:
-        await message.answer(LANG[lang]["hobby"], reply_markup=get_hobby_kb(lang))
-        await state.set_state(FriendForm.hobby)
+    # Birdan hobby bo'limiga o'tiladi
+    await message.answer(LANG[lang]["hobby"], reply_markup=get_hobby_kb(lang))
+    await state.set_state(FriendForm.hobby)
 
 @dp.message(FriendForm.hobby)
 async def process_hobby(message: types.Message, state: FSMContext):
